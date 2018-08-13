@@ -5,9 +5,9 @@ function Get-oAuthToken {
 	.DESCRIPTION
 	   This Function connects to the Microsoft AAD OAuth endpoint and generates an OAuth token.
 	   This token can then be used for authentication against the resource supplied In the parameters.
-	.PARAMETER ClientID
-		The ClientID of the application used for authentication against Azure AD.
-	.PARAMETER ClientSecret
+	.PARAMETER ApplicationId
+		The ApplicationId of the application used for authentication against Azure AD.
+	.PARAMETER ApplicationKey
 		The Key generated within the application used for authentication against Azure AD.
 		This key should have rights to the resource supplied in the ResourceName parameter.
 	.PARAMETER TenantId
@@ -15,14 +15,14 @@ function Get-oAuthToken {
 	.PARAMETER ResourceName
 		The name of the resource that you want to generate a token for.
 	.EXAMPLE
-	   Get-ApiToken -ClientID '12345678-9012-3456-7890-123456789012' -ClientSecret 'AfXooIr8rswX24yrFXMrO4SbBgutwTtojAZEpQOaaaa=' -TenantId 'abcd4ffb-d0bc-1234-854a-114710c94dbb' -Resource 'https://test.onmicrosoft.com/apitest'
+	   Get-ApiToken -ApplicationId '12345678-9012-3456-7890-123456789012' -ApplicationKey 'AfXooIr8rswX24yrFXMrO4SbBgutwTtojAZEpQOaaaa=' -TenantId 'abcd4ffb-d0bc-1234-854a-114710c94dbb' -Resource 'https://test.onmicrosoft.com/apitest'
 	.NOTES
-		Version 1.1
+		Version 1.2.0
 	#>
     [Cmdletbinding()]
     Param(
-        [Parameter(Mandatory = $true)][string]$ClientID,
-        [Parameter(Mandatory = $true)][string]$ClientSecret,
+        [Parameter(Mandatory = $true)][string]$ApplicationId,
+        [Parameter(Mandatory = $true)][string]$ApplicationKey,
         [Parameter(Mandatory = $true)][string]$TenantId,
         [Parameter(Mandatory = $false)][string]$ResourceName = "https://graph.windows.net",
         [Parameter(Mandatory = $false)][boolean]$ChinaAuth = $false
@@ -38,7 +38,7 @@ function Get-oAuthToken {
     }
 
     #Get an Oauth 2 access token based on client id, secret and tenant id
-    $Body = @{grant_type = "client_credentials"; resource = $ResourceName; client_id = $ClientID; client_secret = $ClientSecret}
+    $Body = @{grant_type = "client_credentials"; resource = $ResourceName; client_id = $ApplicationId; client_secret = $ApplicationKey}
     $AuthContext = Invoke-RestMethod -Method Post -Uri $LoginURL/$TenantId/oauth2/token?api-version=1.0 -Body $Body
     Return "$($AuthContext.token_type) $($AuthContext.access_token)"
 }
