@@ -10,7 +10,7 @@ install:
 
 before_build:
   - ps: gitversion /l console /output buildserver
-  - ps: Update-ModuleManifest -Path .\PSF.psd1 -ModuleVersion $env:GitVersion_AssemblySemVer
+  - ps: Update-ModuleManifest -Path .\PSF.psd1 -ModuleVersion $env:GitVersion_MajorMinorPatch
 
 build_script:
   - ps: Test-ModuleManifest -Path .\PSF.psd1 -Verbose -ErrorAction Stop
@@ -20,7 +20,13 @@ build_script:
       Copy-Item .\PSF.ps* $DestPath
 
 deploy_script:
-  - ps: if($env:APPVEYOR_REPO_TAG){ Publish-Module -Name PSF -NuGetApiKey "$env:APIKey" -Verbose } else { Publish-Module -Name PSF -NuGetApiKey "$env:APIKey" -Verbose -WhatIf }
+  - ps: |
+      Write-Host ("APPVEYOR_PULL_REQUEST_TITLE = '{0}'`nAPPVEYOR_REPO_BRANCH = '{1}'" -f $env:APPVEYOR_PULL_REQUEST_TITLE, $env:APPVEYOR_REPO_BRANCH)
+      if($env:APPVEYOR_PULL_REQUEST_TITLE = '' -and $env:APPVEYOR_REPO_BRANCH -eq 'master'){
+        Publish-Module -Name PSF -NuGetApiKey "$env:APIKey" -Verbose 
+      } else { 
+        Publish-Module -Name PSF -NuGetApiKey "$env:APIKey" -Verbose -WhatIf 
+      }
 
 artifacts:
   - path: .\
