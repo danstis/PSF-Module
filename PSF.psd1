@@ -98,10 +98,10 @@ PrivateData = @{
         # Tags = @()
 
         # A URL to the license for this module.
-        # LicenseUri = ''
+        LicenseUri = 'https://raw.githubusercontent.com/danstis/PSF-Module/create-initial-module/LICENSE'
 
         # A URL to the main website for this project.
-        # ProjectUri = ''
+        ProjectUri = 'https://github.com/danstis/PSF-Module'
 
         # A URL to an icon representing this module.
         # IconUri = ''
