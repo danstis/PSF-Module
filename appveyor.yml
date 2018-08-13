@@ -27,7 +27,7 @@ deploy_script:
       if($env:APPVEYOR_PULL_REQUEST_TITLE = '' -and $env:APPVEYOR_REPO_BRANCH -eq 'master'){
         Publish-Module -Name PSF -NuGetApiKey "$env:APIKey" -Verbose -Force
       } else { 
-        Write-Warning "Not publishing module as we are on branch '$env:APPVEYOR_REPO_BRANCH' (or we are processing a Pull Request)."
+        Write-Warning "Not publishing module as we are on branch '$env:APPVEYOR_REPO_BRANCH' (or we are processing a Pull Request '$env:APPVEYOR_PULL_REQUEST_TITLE')."
       }
 
 artifacts:
