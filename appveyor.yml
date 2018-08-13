@@ -25,7 +25,7 @@ deploy_script:
       if($env:APPVEYOR_PULL_REQUEST_TITLE = '' -and $env:APPVEYOR_REPO_BRANCH -eq 'master'){
         Publish-Module -Name PSF -NuGetApiKey "$env:APIKey" -Verbose 
       } else { 
-        Publish-Module -Name PSF -NuGetApiKey "$env:APIKey" -Verbose -WhatIf 
+        Publish-Module -Name PSF -NuGetApiKey "$env:APIKey" -WhatIf -Verbose
       }
 
 artifacts:
