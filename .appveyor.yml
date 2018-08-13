@@ -5,6 +5,7 @@ environment:
 
 install:
   - choco install gitversion.portable -pre -y
+  - rm C:\Tools\GitVersion\GitVersion.exe
 
 before_build:
   - ps: gitversion /l console /output buildserver
