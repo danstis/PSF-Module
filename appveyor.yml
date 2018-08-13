@@ -19,6 +19,9 @@ build_script:
       New-Item -Path $DestPath -Type Directory -Force
       Copy-Item .\PSF.ps* $DestPath
 
+after_build:
+  - 7z a PSF.zip %APPVEYOR_BUILD_FOLDER%\PSF.ps*
+
 deploy_script:
   - ps: |
       if($env:APPVEYOR_PULL_REQUEST_TITLE = '' -and $env:APPVEYOR_REPO_BRANCH -eq 'master'){
@@ -28,6 +31,5 @@ deploy_script:
       }
 
 artifacts:
-  - path: (pwd).Path
+  - path: PSF.zip
     name: PSF Module
-    type: zip
