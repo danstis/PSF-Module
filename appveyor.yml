@@ -8,15 +8,16 @@ install:
   - rm C:\Tools\GitVersion\GitVersion.exe
   - ps: Install-PackageProvider -Name NuGet -MinimumVersion '2.8.5.201' -Force
 
-before_test:
+before_build:
   - ps: gitversion /l console /output buildserver
   - ps: Update-ModuleManifest -Path .\PSF.psd1 -ModuleVersion $env:GitVersion_AssemblySemVer
 
-test_script:
+build_script:
   - ps: Test-ModuleManifest -Path .\PSF.psd1 -Verbose -ErrorAction Stop
+  - ps: Copy-Item .\PSF.ps* C:\Users\appveyor\Documents\WindowsPowerShell\Modules\PSF\
 
 deploy_script:
-  - ps: if($env:APPVEYOR_REPO_TAG){ Publish-Module -Path (pwd).Path -NuGetApiKey "$env:APIKey" -Verbose } else { Publish-Module -Path (pwd).Path -NuGetApiKey "$env:APIKey" -Verbose -WhatIf }
+  - ps: if($env:APPVEYOR_REPO_TAG){ Publish-Module -Name PSF -NuGetApiKey "$env:APIKey" -Verbose } else { Publish-Module -Name PSF -NuGetApiKey "$env:APIKey" -Verbose -WhatIf }
 
 artifacts:
   - path: .\
