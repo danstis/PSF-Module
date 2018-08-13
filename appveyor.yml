@@ -21,14 +21,13 @@ build_script:
 
 deploy_script:
   - ps: |
-      Write-Host ("APPVEYOR_PULL_REQUEST_TITLE = '{0}'`nAPPVEYOR_REPO_BRANCH = '{1}'" -f $env:APPVEYOR_PULL_REQUEST_TITLE, $env:APPVEYOR_REPO_BRANCH)
       if($env:APPVEYOR_PULL_REQUEST_TITLE = '' -and $env:APPVEYOR_REPO_BRANCH -eq 'master'){
         Publish-Module -Name PSF -NuGetApiKey "$env:APIKey" -Verbose 
       } else { 
-        Publish-Module -Name PSF -NuGetApiKey "$env:APIKey" -WhatIf -Verbose
+        Write-Warning "Not publishing module as we are on branch '$env:APPVEYOR_REPO_BRANCH' (or we are processing a Pull Request)."
       }
 
 artifacts:
-  - path: .\
+  - path: (pwd).Path
     name: PSF Module
     type: zip
