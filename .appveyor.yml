@@ -11,7 +11,7 @@ before_build:
   - ps: gitversion /l console /output buildserver
 
 build_script:
-  - ps: Update-ModuleManifest -Path .\PSF.psd1 -ModuleVersion $env:GitVersion_SemVer
+  - ps: Update-ModuleManifest -Path .\PSF.psd1 -ModuleVersion $env:GitVersion_AssemblySemVer
   - ps: Publish-Module -Name PSF -NuGetApiKey "$env:APIKey" -WhatIf
 
 artifacts:
