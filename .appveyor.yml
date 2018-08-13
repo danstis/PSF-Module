@@ -1,0 +1,19 @@
+image: WMF 5
+environment:
+  APIKey:
+    secure: v711B0A/aGDr4wVCW3sYtaJJljC+rXipS2PENvcBC+qtOs4VXS9QWDTMJyQIKLTv
+
+install:
+  - choco install gitversion.portable -pre -y
+
+before_build:
+  - ps: gitversion /l console /output buildserver
+
+build_script:
+  - ps: Update-ModuleManifest -Path .\PSF.psd1 -ModuleVersion $env:GitVersion_SemVer
+  - ps: Publish-Module -Name PSF -NuGetApiKey "$env:APIKey" -WhatIf
+
+artifacts:
+  - path: .\
+    name: PSF Module
+    type: zip
