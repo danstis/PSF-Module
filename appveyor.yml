@@ -8,12 +8,15 @@ install:
   - rm C:\Tools\GitVersion\GitVersion.exe
   - ps: Install-PackageProvider -Name NuGet -MinimumVersion '2.8.5.201' -Force
 
-before_build:
+before_test:
   - ps: gitversion /l console /output buildserver
-
-build_script:
   - ps: Update-ModuleManifest -Path .\PSF.psd1 -ModuleVersion $env:GitVersion_AssemblySemVer
-  - ps: if($env:APPVEYOR_REPO_TAG){ Publish-Module -Path (pwd).Path -NuGetApiKey "$env:APIKey" } else { Publish-Module -Path (pwd).Path -NuGetApiKey "$env:APIKey" -WhatIf }
+
+test_script:
+  - ps: Test-ModuleManifest -Path .\PSF.psd1 -Verbose -ErrorAction Stop
+
+deploy_script:
+  - ps: if($env:APPVEYOR_REPO_TAG){ Publish-Module -Path (pwd).Path -NuGetApiKey "$env:APIKey" -Verbose } else { Publish-Module -Path (pwd).Path -NuGetApiKey "$env:APIKey" -Verbose -WhatIf }
 
 artifacts:
   - path: .\
