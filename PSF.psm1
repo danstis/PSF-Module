@@ -67,25 +67,24 @@ Function Get-RandomPassword {
     .OUTPUTS
         A generated password.
     .NOTES
-        Version 1.1.0
+        Version 1.2.0
     #>
 
 	Param(
 		[Parameter(Mandatory = $false, HelpMessage = "PWLength", Position = 0)]
         [int] $Length = 20,
-        [Parameter(Mandatory = $False, Position = 1)]
-        [ValidateSet("SQL", "ULN", "UL", "UN", "LN")]
-		[string] $InputValue,
-		[Parameter(Mandatory = $False, Position = 2)]
-		[Char[]] $Exclude
+        [Parameter(Mandatory = $false, HelpMessage = "Character sets [U/L/N/S]", Position = 1)]
+		[char[]] $CharSets = "ULNS",
+		[Parameter(Mandatory = $false, Position = 2)]
+		[char[]] $Exclude,
+		[Parameter(Mandatory = $false)]
+		[switch] $SQL
 	)
 	# Declare empty variables
 	$Password = @()
     $AllNonExcludedCharacters = @()
-    [Char[]]$CharSets = "ULNS"
     $SQLExcluded = '\',"'",'"','%','$','`',',',';','I','l','0','O','1'
-    if (($InputValue -ne "") -and ($InputValue -ne "SQL")) {$CharSets = $InputValue}
-    if ($InputValue -eq "SQL") {$Exclude = $SQLExcluded}
+    if ($SQL) {$Exclude = $SQLExcluded}
 	# Create character arrays for U, L, N and S.
 	$CharacterSetArray = @{
 		U = [Char[]](65 .. 90)
