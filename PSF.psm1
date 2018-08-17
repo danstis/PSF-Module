@@ -1,5 +1,5 @@
 function Get-oAuthToken {
-    <#
+	<#
 	.SYNOPSIS
 	   Function to connect to the Microsoft login OAuth endpoint and return an OAuth token.
 	.DESCRIPTION
@@ -19,73 +19,72 @@ function Get-oAuthToken {
 	.NOTES
 		Version 1.2.0
 	#>
-    [Cmdletbinding()]
-    Param(
-        [Parameter(Mandatory = $true)][string]$ApplicationId,
-        [Parameter(Mandatory = $true)][string]$ApplicationKey,
-        [Parameter(Mandatory = $true)][string]$TenantId,
-        [Parameter(Mandatory = $false)][string]$ResourceName = "https://graph.windows.net",
-        [Parameter(Mandatory = $false)][boolean]$ChinaAuth = $false
-    )
+	[Cmdletbinding()]
+	Param(
+		[Parameter(Mandatory = $true)][string]$ApplicationId,
+		[Parameter(Mandatory = $true)][string]$ApplicationKey,
+		[Parameter(Mandatory = $true)][string]$TenantId,
+		[Parameter(Mandatory = $false)][string]$ResourceName = "https://graph.windows.net",
+		[Parameter(Mandatory = $false)][boolean]$ChinaAuth = $false
+	)
 
-    #This script will require the Web Application and permissions configured in Azure Active Directory.
-    if ($ChinaAuth) {
-        $LoginURL	= 'https://login.chinacloudapi.cn'
-        $ResourceName = $ResourceName.replace("windows.net", "chinacloudapi.cn")
-    }
-    else {
-        $LoginURL	= 'https://login.windows.net'
-    }
+	#This script will require the Web Application and permissions configured in Azure Active Directory.
+	if ($ChinaAuth) {
+		$LoginURL	= 'https://login.chinacloudapi.cn'
+		$ResourceName = $ResourceName.replace("windows.net", "chinacloudapi.cn")
+	}
+	else {
+		$LoginURL	= 'https://login.windows.net'
+	}
 
-    #Get an Oauth 2 access token based on client id, secret and tenant id
-    $Body = @{grant_type = "client_credentials"; resource = $ResourceName; client_id = $ApplicationId; client_secret = $ApplicationKey}
-    $AuthContext = Invoke-RestMethod -Method Post -Uri $LoginURL/$TenantId/oauth2/token?api-version=1.0 -Body $Body
-    Return "$($AuthContext.token_type) $($AuthContext.access_token)"
+	#Get an Oauth 2 access token based on client id, secret and tenant id
+	$Body = @{grant_type = "client_credentials"; resource = $ResourceName; client_id = $ApplicationId; client_secret = $ApplicationKey}
+	$AuthContext = Invoke-RestMethod -Method Post -Uri $LoginURL/$TenantId/oauth2/token?api-version=1.0 -Body $Body
+	Return "$($AuthContext.token_type) $($AuthContext.access_token)"
 }
 
 Function Get-RandomPassword {
 	<#
-    .SYNOPSIS
-        Generates random passwords.
-    .DESCRIPTION
-        Function to generate password based on character sets. Enables choice of password length and complexity.
-    .EXAMPLE
-        C:\PS> Get-RandomPassword
-        Generates a 20 character complex password and copies the result to your clipboard.
-    .EXAMPLE
-        C:\PS> Get-RandomPassword 16 uln
-        Generates a 16 character password with Upper (u), Lower (l) and Numbers (n) and copies the result to your clipboard.
-    .PARAMETER Length
-        Length of password to be generated.
-        Default: 20
-    .PARAMETER CharSets
-        Choose which character sets to use. Options are U (upper case), L (lower case), N (number) and S (special characters).
-        Default: ULNS
-    .PARAMETER Exclude
-        Exclude one or more characters from the password.
-        Example: Get-RandomPassword -Exclude '#$' will exclude the # and $ characters from the password.
-    .OUTPUTS
-        A generated password.
-    .NOTES
-        Version 1.1.0
-    #>
+	.SYNOPSIS
+		Generates random passwords.
+	.DESCRIPTION
+		Function to generate password based on character sets. Enables choice of password length and complexity.
+	.EXAMPLE
+		C:\PS> Get-RandomPassword
+		Generates a 20 character complex password and copies the result to your clipboard.
+	.EXAMPLE
+		C:\PS> Get-RandomPassword 16 uln
+		Generates a 16 character password with Upper (u), Lower (l) and Numbers (n) and copies the result to your clipboard.
+	.PARAMETER Length
+		Length of password to be generated.
+		Default: 20
+	.PARAMETER CharSets
+		Choose which character sets to use. Options are U (upper case), L (lower case), N (number) and S (special characters).
+		Default: ULNS
+	.PARAMETER Exclude
+		Exclude one or more characters from the password.
+		Example: Get-RandomPassword -Exclude '#$' will exclude the # and $ characters from the password.
+	.OUTPUTS
+		A generated password.
+	.NOTES
+		Version 1.2.0
+	#>
 
 	Param(
 		[Parameter(Mandatory = $false, HelpMessage = "PWLength", Position = 0)]
-        [int] $Length = 20,
-        [Parameter(Mandatory = $False, Position = 1)]
-        [ValidateSet("SQL", "ULN", "UL", "UN", "LN")]
-		[string] $InputValue,
-		[Parameter(Mandatory = $False, Position = 2)]
-		[Char[]] $Exclude
+		[int] $Length = 20,
+		[Parameter(Mandatory = $false, HelpMessage = "Character sets [U/L/N/S]", Position = 1)]
+		[char[]] $CharSets = "ULNS",
+		[Parameter(Mandatory = $false, Position = 2)]
+		[char[]] $Exclude,
+		[Parameter(Mandatory = $false)]
+		[switch] $SQL
 	)
 	# Declare empty variables
 	$Password = @()
-    $AllNonExcludedCharacters = @()
-    [Char[]]$CharSets = "ULNS"
-    $SQLExcluded = '\',"'",'"','%','$','`',',',';','I','l','0','O','1'
-    if (($InputValue -ne "") -and ($InputValue -ne "SQL")) {$CharSets = $InputValue}
-    if ($InputValue -eq "SQL") {$Exclude = $SQLExcluded}
+	$AllNonExcludedCharacters = @()
+	$SQLExcluded = '\',"'",'"','%','$','`',',',';','I','l','0','O','1'
+	if ($SQL) {$Exclude = $SQLExcluded}
 	# Create character arrays for U, L, N and S.
 	$CharacterSetArray = @{
 		U = [Char[]](65 .. 90)
@@ -96,14 +95,14 @@ Function Get-RandomPassword {
 
 	# For each character set (U, L, N, S) sent to the function.
 	$CharSets | ForEach-Object {
-        $NonExcludedTokens = @()
+		$NonExcludedTokens = @()
 		# For each character in the character set array.
 		$NonExcludedTokens = $CharacterSetArray."$_" | ForEach-Object {
 			# Check to see if the character currently being looped is an excluded character (requested by the user).
 			If ($Exclude -cNotContains $_) {
 				# Add this character to the NonExcludedTokens array if not an excluded character.
 				$_
-            }
+			}
 		}
 		# If NonExcludedTokens contains any characters.
 		If ($NonExcludedTokens) {
