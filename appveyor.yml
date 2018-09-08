@@ -14,6 +14,7 @@ before_build:
 
 build_script:
   - ps: Test-ModuleManifest -Path .\PSF.psd1 -Verbose -ErrorAction Stop
+  - ps: .\.ExecuteTests.ps1
   - ps: |
       $DestPath = "C:\Users\appveyor\Documents\WindowsPowerShell\Modules\PSF\"
       New-Item -Path $DestPath -Type Directory -Force
