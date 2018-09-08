@@ -14,7 +14,7 @@ before_build:
 
 build_script:
   - ps: Test-ModuleManifest -Path .\PSF.psd1 -Verbose -ErrorAction Stop
-  - ps: | 
+  - ps: |
       $DestPath = "C:\Users\appveyor\Documents\WindowsPowerShell\Modules\PSF\"
       New-Item -Path $DestPath -Type Directory -Force
       Copy-Item .\PSF.ps* $DestPath
@@ -24,10 +24,10 @@ after_build:
 
 deploy_script:
   - ps: |
-      if($env:APPVEYOR_REPO_BRANCH -eq 'master'){
+      if($env:APPVEYOR_REPO_BRANCH -eq 'master' -and $env:APPVEYOR_REPO_TAG){
         Publish-Module -Name PSF -NuGetApiKey "$env:APIKey" -Verbose -Force
-      } else { 
-        Write-Warning "Not publishing module as we are on branch '$env:APPVEYOR_REPO_BRANCH'."
+      } else {
+        Write-Warning "Not publishing module as we are not on master branch, or not building a tag.`nBranch = '$env:APPVEYOR_REPO_BRANCH'`nTag = '$env:APPVEYOR_REPO_TAG'"
       }
 
 artifacts:
