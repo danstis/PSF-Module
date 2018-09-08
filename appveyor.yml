@@ -18,9 +18,10 @@ build_script:
       $DestPath = "C:\Users\appveyor\Documents\WindowsPowerShell\Modules\PSF\"
       New-Item -Path $DestPath -Type Directory -Force
       Copy-Item .\PSF.ps* $DestPath
+      Copy-Item .\functions $DestPath -Recurse
 
 after_build:
-  - 7z a PSF.zip %APPVEYOR_BUILD_FOLDER%\PSF.ps*
+  - 7z a -r PSF.zip %APPVEYOR_BUILD_FOLDER%\PSF.ps* %APPVEYOR_BUILD_FOLDER%\functions
 
 deploy_script:
   - ps: |
