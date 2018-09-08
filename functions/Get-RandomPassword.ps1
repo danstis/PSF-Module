@@ -22,7 +22,7 @@ Function Get-RandomPassword {
 	.OUTPUTS
 		A generated password.
 	.NOTES
-		Version 1.2.0
+		Version 1.3.0
 	#>
 
 	Param(
@@ -75,8 +75,9 @@ Function Get-RandomPassword {
 	}
 
 	# Randomise the characters in the Password array and join them as a single line. Output the line to screen and copy to clipboard.
-	($Password | Sort-Object {Get-Random}) -Join "" | Tee-Object -v Output
+	$Output = ($Password | Sort-Object {Get-Random}) -Join ""
 	$Output | Clip
+	Return $Output
 }
 
 New-Alias -Name gpw -Value Get-RandomPassword
