@@ -4,8 +4,10 @@ environment:
     secure: v711B0A/aGDr4wVCW3sYtaJJljC+rXipS2PENvcBC+qtOs4VXS9QWDTMJyQIKLTv
 
 install:
-  - choco install gitversion.portable -y
-  - rm C:\Tools\GitVersion\GitVersion.exe
+  - gitversion /version
+  # - choco install gitversion.portable -y
+  # - rm C:\Tools\GitVersion\GitVersion.exe
+  # - gitversion /version
   - ps: Install-PackageProvider -Name NuGet -MinimumVersion '2.8.5.201' -Force
 
 before_build:
