@@ -3,3 +3,4 @@
 . $PSScriptRoot\functions\Get-oAuthToken.ps1
 . $PSScriptRoot\functions\Get-RandomPassword.ps1
 . $PSScriptRoot\functions\Connect-AadWithRmContext.ps1
+. $PSScriptRoot\functions\Get-PublicIPAddress.ps1
