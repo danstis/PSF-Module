@@ -25,14 +25,6 @@ jobs:
           Test-ModuleManifest -Path .\PSF.psd1 -Verbose -ErrorAction Stop
           .\.ExecuteTests.ps1
 
-      # - name: Copy files to staging directory
-      #   shell: pwsh
-      #   run: |
-      #     $DestPath = "C:\Users\appveyor\Documents\WindowsPowerShell\Modules\PSF\"
-      #     New-Item -Path $DestPath -Type Directory -Force
-      #     Copy-Item .\PSF.ps* $DestPath
-      #     Copy-Item .\functions $DestPath -Recurse
-
   deploy:
     name: Tag and Deploy
     runs-on: windows-2019
@@ -65,9 +57,17 @@ jobs:
         run: |
           Update-ModuleManifest -Path .\PSF.psd1 -ModuleVersion ${{ steps.gitversion.outputs.MajorMinorPatch }}
 
+      - name: Copy files to staging directory
+        shell: pwsh
+        run: |
+          $DestPath = ".\Modules\PSF\"
+          New-Item -Path $DestPath -Type Directory -Force
+          Copy-Item .\PSF.ps* $DestPath
+          Copy-Item .\functions $DestPath -Recurse
+
       - name: Publish to gallery
         env:
           NUGET_KEY: ${{ secrets.NUGET_KEY }}
         shell: pwsh
         run: |
-          Publish-Module -Path . -NuGetApiKey $env:NUGET_KEY -Verbose
+          Publish-Module -Path ".\Modules\PSF\" -NuGetApiKey $env:NUGET_KEY -Verbose
