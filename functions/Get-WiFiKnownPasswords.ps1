@@ -23,5 +23,5 @@ function Get-WiFiKnownPasswords {
 			Password = (($WifiDetails -match "Key Content") -split ": ")[-1]
 		}
 	}
-	return $Output
+	return $Output | Sort-Object Name
 }
