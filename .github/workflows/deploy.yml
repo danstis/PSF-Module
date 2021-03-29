@@ -11,7 +11,7 @@ on:
 
 jobs:
   test:
-    name: Test and Build
+    name: Test
     runs-on: windows-2019
     steps:
       - name: Check out code
