@@ -1,0 +1,73 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test and Build
+    runs-on: windows-2019
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Run tests
+        shell: pwsh
+        run: |
+          Test-ModuleManifest -Path .\PSF.psd1 -Verbose -ErrorAction Stop
+          .\.ExecuteTests.ps1
+
+      # - name: Copy files to staging directory
+      #   shell: pwsh
+      #   run: |
+      #     $DestPath = "C:\Users\appveyor\Documents\WindowsPowerShell\Modules\PSF\"
+      #     New-Item -Path $DestPath -Type Directory -Force
+      #     Copy-Item .\PSF.ps* $DestPath
+      #     Copy-Item .\functions $DestPath -Recurse
+
+  deploy:
+    name: Tag and Deploy
+    runs-on: windows-2019
+    needs: [test]
+    if: contains(github.ref, 'master')
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v0.9.9
+        with:
+          versionSpec: "5.5.x"
+
+      - name: Version with GitVersion # https://github.com/marketplace/actions/use-actions
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v0.9.9
+
+      - name: Push version tag
+        uses: tvdias/github-tagger@v0.0.2
+        continue-on-error: true
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ steps.gitversion.outputs.FullSemVer }}
+
+      - name: Update module manifest
+        shell: pwsh
+        run: |
+          Update-ModuleManifest -Path ./PSF.psd1 -ModuleVersion ${{ steps.gitversion.outputs.MajorMinorPatch }}
+
+      - name: Publish to gallery
+        env:
+          NUGET_KEY: ${{ secrets.NUGET_KEY }}
+        shell: pwsh
+        run: |
+          Publish-Module -Path . -NuGetApiKey $env:NUGET_KEY -Verbose
