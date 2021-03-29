@@ -27,7 +27,7 @@
 	CompanyName       = 'N/A'
 
 	# Copyright statement for this module
-	Copyright         = '(c) 2018 Colin Roche, Dan Anstis. All rights reserved.'
+	Copyright         = '(c) 2021 Colin Roche, Dan Anstis. All rights reserved.'
 
 	# Description of the functionality provided by this module
 	Description       = 'PowerShell Functions Module'
