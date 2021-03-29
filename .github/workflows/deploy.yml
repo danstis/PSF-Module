@@ -63,7 +63,7 @@ jobs:
       - name: Update module manifest
         shell: pwsh
         run: |
-          Update-ModuleManifest -Path ./PSF.psd1 -ModuleVersion ${{ steps.gitversion.outputs.MajorMinorPatch }}
+          Update-ModuleManifest -Path .\PSF.psd1 -ModuleVersion ${{ steps.gitversion.outputs.MajorMinorPatch }}
 
       - name: Publish to gallery
         env:
