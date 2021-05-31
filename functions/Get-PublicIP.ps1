@@ -1,4 +1,20 @@
 function Get-PublicIP {
+	<#
+	.SYNOPSIS
+		Returns the public IP address for the connected network.
+	.DESCRIPTION
+		Uses the ipify.org API to lookup the Public IP address.
+	.EXAMPLE
+		C:\PS> Get-PublicIP
+		Returns the current IPv4 Public IP for the connected network.
+	.EXAMPLE
+		C:\PS> Get-PublicIP -v6
+		Returns the current IPv6 (if available) Public IP for the connected network.
+	.OUTPUTS
+		Public IP address(es)
+	.NOTES
+		Version 1.0.0
+	#>
 	[CmdletBinding()]
 	param (
 		# IPv6 switch
