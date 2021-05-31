@@ -69,7 +69,7 @@
 	# NestedModules = @()
 
 	# Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-	FunctionsToExport = @('Get-oAuthToken', 'Get-RandomPassword', 'Get-WiFiKnownPasswords')
+	FunctionsToExport = @('Get-oAuthToken', 'Get-RandomPassword', 'Get-WiFiKnownPasswords', 'Get-PublicIP')
 
 	# Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 	CmdletsToExport   = @()
@@ -78,7 +78,7 @@
 	# VariablesToExport = @()
 
 	# Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
-	AliasesToExport   = @('gpw')
+	AliasesToExport   = @('gpw', 'gpip', 'Get-PublicIPAddress')
 
 	# DSC resources to export from this module
 	# DscResourcesToExport = @()
