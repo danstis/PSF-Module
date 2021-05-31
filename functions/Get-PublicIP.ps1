@@ -4,6 +4,7 @@ function Get-PublicIP {
 		Returns the public IP address for the connected network.
 	.DESCRIPTION
 		Uses the ipify.org API to lookup the Public IP address.
+		The function will return the Public IP as well as copy it to your clipboard.
 	.EXAMPLE
 		C:\PS> Get-PublicIP
 		Returns the current IPv4 Public IP for the connected network.
@@ -35,6 +36,7 @@ function Get-PublicIP {
 	}
 
 	end {
+		$resp.ip | clip
 		return $resp.ip
 	}
 }
