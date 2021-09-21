@@ -15,17 +15,16 @@ function Get-WiFiKnownPasswords {
 	$WLANList = (netsh.exe wlan show profiles) -match ': '
 	$WifiNetworks = @()
 	$Output = @()
-	foreach ($WLAN in $WLANList) { $WifiNetworks += ($WLAN -split ": ")[-1] }
+	foreach ($WLAN in $WLANList) { $WifiNetworks += ($WLAN -split ': ')[-1] }
 	foreach ($WifiNetwork in $WifiNetworks) {
 		$WifiDetails = netsh wlan show profile $WifiNetwork key=clear
-		if ((($WifiDetails -match "Authentication") -split ": ")[-1] -eq 'WPA2-Enterprise') {
-			$WiFiPassword = "Enterprise Profile - Password Not Available"
-		}
-		else {
-			$WiFiPassword = (($WifiDetails -match "Key Content") -split ": ")[-1]
+		if ((($WifiDetails -match 'Authentication') -split ': ')[-1] -eq 'WPA2-Enterprise') {
+			$WiFiPassword = 'Enterprise Profile - Password Not Available'
+		} else {
+			$WiFiPassword = (($WifiDetails -match 'Key Content') -split ': ')[-1]
 		}
 		$Output += [PSCustomObject]@{
-			Name     = (($WifiDetails -match "(?-i)Name") -split ": ")[-1]
+			Name     = (($WifiDetails -match '(?-i)Name') -split ': ')[-1]
 			Password = $WiFiPassword
 		}
 	}

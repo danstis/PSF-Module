@@ -26,10 +26,10 @@ Function Get-RandomPassword {
 	#>
 
 	Param(
-		[Parameter(Mandatory = $false, HelpMessage = "PWLength", Position = 0)]
+		[Parameter(Mandatory = $false, HelpMessage = 'PWLength', Position = 0)]
 		[int] $Length = 20,
-		[Parameter(Mandatory = $false, HelpMessage = "Character sets [U/L/N/S]", Position = 1)]
-		[char[]] $CharSets = "ULNS",
+		[Parameter(Mandatory = $false, HelpMessage = 'Character sets [U/L/N/S]', Position = 1)]
+		[char[]] $CharSets = 'ULNS',
 		[Parameter(Mandatory = $false, Position = 2)]
 		[char[]] $Exclude,
 		[Parameter(Mandatory = $false)]
@@ -38,8 +38,8 @@ Function Get-RandomPassword {
 	# Declare empty variables
 	$Password = @()
 	$AllNonExcludedCharacters = @()
-	$SQLExcluded = '\',"'",'"','%','$','`',',',';','I','l','0','O','1'
-	if ($SQL) {$Exclude = $SQLExcluded}
+	$SQLExcluded = '\', "'", '"', '%', '$', '`', ',', ';', 'I', 'l', '0', 'O', '1'
+	if ($SQL) { $Exclude = $SQLExcluded }
 	# Create character arrays for U, L, N and S.
 	$CharacterSetArray = @{
 		U = [Char[]](65 .. 90)
@@ -63,7 +63,7 @@ Function Get-RandomPassword {
 		If ($NonExcludedTokens) {
 			# Add the characters to the AllNonExcludedCharacters array.
 			$AllNonExcludedCharacters += $NonExcludedTokens
-			# Append a random character from this NonExcludedTekons array to the password array.
+			# Append a random character from this NonExcludedTokens array to the password array.
 			$Password += $NonExcludedTokens | Get-Random
 		}
 	}
@@ -75,7 +75,7 @@ Function Get-RandomPassword {
 	}
 
 	# Randomise the characters in the Password array and join them as a single line. Output the line to screen and copy to clipboard.
-	$Output = ($Password | Sort-Object {Get-Random}) -Join ""
+	$Output = ($Password | Sort-Object { Get-Random }) -Join ''
 	$Output | Clip
 	Return $Output
 }

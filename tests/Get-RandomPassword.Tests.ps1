@@ -21,7 +21,7 @@ Describe 'Get-RandomPassword' {
 		[char[]]$ExcludedChars = "\`"'%$``,;Il0O1"
 		$Result = Get-RandomPassword -Length 100 -SQL
 		foreach ($Char in $ExcludedChars) {
-			if ($Result.Contains($Char)) {$CharMatch = $true}
+			if ($Result.Contains($Char)) { $CharMatch = $true }
 		}
 		$CharMatch | Should -BeFalse
 	}
@@ -30,10 +30,10 @@ Describe 'Get-RandomPassword' {
 		# Variable to track if a match was found
 		$CharMatch = $false
 		# Characters to exclude
-		[char[]]$ExcludedChars = "abcdefghijklmnopqrstuvwxy" # Exclude all lowercase characters apart from 'z'
-		$Result = Get-RandomPassword -Length 30 -Exclude $ExcludedChars -Charsets "L" # Generated password will be 30x 'z'
+		[char[]]$ExcludedChars = 'abcdefghijklmnopqrstuvwxy' # Exclude all lowercase characters apart from 'z'
+		$Result = Get-RandomPassword -Length 30 -Exclude $ExcludedChars -Charsets 'L' # Generated password will be 30x 'z'
 		foreach ($Char in $ExcludedChars) {
-			if ($Result.Contains($Char)) {$CharMatch = $true}
+			if ($Result.Contains($Char)) { $CharMatch = $true }
 		}
 		$CharMatch | Should -BeFalse
 	}
