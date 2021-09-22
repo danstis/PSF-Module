@@ -14,101 +14,131 @@ function Get-Updates {
 		Version 1.0.0
 	#>
 	[CmdletBinding()]
-	param (	)
+	param ()
 
-	begin {
-		$ErrorActionPreference = 'Stop'
-		# Check for supported applications.
-		$Chocolatey = $null -ne (Get-Command choco -ErrorAction SilentlyContinue)
-		$WinGet = $null -ne (Get-Command winget -ErrorAction SilentlyContinue)
+	$ErrorActionPreference = 'Stop'
+
+	# Check for supported applications.
+	$Chocolatey = ($null -ne (Get-Command choco -ErrorAction SilentlyContinue))
+	$WinGet = ($null -ne (Get-Command winget -ErrorAction SilentlyContinue))
+	#Define the output file paths
+	$PathChoco = "$env:temp\choco-outdated.json"
+	$PathPS = "$env:temp\powershell-outdated.json"
+	$PathWinGet = "$env:temp\winget-outdated.json"
+
+	# Check PowerShell module updates.
+	Write-Host 'Checking PowerShell module updates...'
+	if (Test-Path $PathPS -PathType Leaf) {
+		# Remove the PS update file if it exists.
+		Remove-Item -Path $PathPS -Force | Out-Null
 	}
-
-	process {
-		# Check PowerShell module updates.
-		$Modules = Get-Module -ListAvailable | Where-Object { `
-				$_.RepositorySourceLocation -and `
-				$_.Name -notlike 'Az.*' -and `
-				$_.Name -notlike 'AzureRM.*' -and `
-				$_.Name -notlike 'Microsoft.Graph.*' `
-		} | Group-Object Name | Select-Object Name, @{n = 'Version'; e = { $_.Group[0].Version } }
-		$ModuleUpdates = foreach ($Module in $Modules) {
-			try {
-				$Available = Find-Module $Module.Name
-				if ([version]($Available).Version -gt [version]$Module.Version) {
-					[PSCustomObject]@{
-						Module           = $Module.Name
-						CurrentVersion   = $Module.Version.ToString()
-						AvailableVersion = $Available.Version
-					}
+	$Modules = Get-Module -ListAvailable | Where-Object { `
+			$_.RepositorySourceLocation -and `
+			$_.Name -notlike 'Az.*' -and `
+			$_.Name -notlike 'AzureRM.*' -and `
+			$_.Name -notlike 'Microsoft.Graph.*' `
+	} | Group-Object Name | Select-Object Name, @{n = 'Version'; e = { $_.Group[0].Version } }
+	$ModuleUpdates = foreach ($Module in $Modules) {
+		try {
+			$Available = Find-Module $Module.Name
+			if ([version]($Available).Version -gt [version]$Module.Version) {
+				[PSCustomObject]@{
+					Module           = $Module.Name
+					CurrentVersion   = $Module.Version.ToString()
+					AvailableVersion = $Available.Version
 				}
-			} catch {
-				Write-Warning ('Failed to find details for module "{0}": {1}' -f $Module.Name, $_.Exception.Message)
 			}
+		} catch {
+			Write-Warning ('Failed to find details for module "{0}": {1}' -f $Module.Name, $_.Exception.Message)
 		}
-		$ModuleUpdates | ConvertTo-Json | Out-File -FilePath "$env:temp\powershell-outdated.json" -Encoding utf8 -Force
+	}
+	if ($ModuleUpdates) {
+		$ModuleUpdates | ConvertTo-Json | Out-File -FilePath $PathPS -Encoding utf8 -Force
+	}
 
-		# If Chocolatey is installed, check its updates.
-		if ($Chocolatey) {
-			& Choco outdated -r | Out-File -FilePath "$env:temp\choco-outdated.txt" -Encoding utf8 -Force
+	# If Chocolatey is installed, check its updates.
+	if ($Chocolatey) {
+		Write-Host 'Checking Chocolatey package updates...'
+		if (Test-Path $PathChoco -PathType Leaf) {
+			# Remove the Choco update file if it exists.
+			Remove-Item -Path $PathChoco -Force | Out-Null
 		}
-		# If WinGet is installed, check its updates.
-		if ($WinGet) {
-			& winget upgrade | Out-File -FilePath "$env:temp\winget-outdated.txt" -Encoding utf8 -Force
+		$ChocoOutput = & Choco outdated -r
+		$ChocoUpdates = @(
+			foreach ($line in $ChocoOutput) {
+				if ($line -match '(.*)\|(.*)\|(.*)\|(.*)') {
+					[PSCustomObject]@{
+						Package          = $Matches[1]
+						CurrentVersion   = $Matches[2]
+						AvailableVersion = $Matches[3]
+					}
+				}
+			}
+		)
+		if ($ChocoUpdates) {
+			$ChocoUpdates | ConvertTo-Json | Out-File -FilePath $PathChoco -Encoding utf8 -Force
 		}
 	}
 
-	end {
-		if ($Chocolatey -and (Test-Path "$env:TEMP\choco-outdated.txt" -ea 'SilentlyContinue')) {
-			$Detail = Get-Content "$env:TEMP\choco-outdated.txt"
-			$Output = @(
-				foreach ($line in $Detail) {
-					if ($line -match '(.*)\|(.*)\|(.*)\|(.*)') {
-						[PSCustomObject]@{
-							Package          = $Matches[1]
-							CurrentVersion   = $Matches[2]
-							AvailableVersion = $Matches[3]
-						}
+	# If WinGet is installed, check its updates.
+	if ($WinGet) {
+		Write-Host 'Checking WinGet package updates...'
+		if (Test-Path $PathWinGet -PathType Leaf) {
+			# Remove the WinGet update file if it exists.
+			Remove-Item -Path $PathWinGet -Force | Out-Null
+		}
+		$WinGetOutput = & winget upgrade
+		$WinGetUpdates = @(
+			foreach ($line in ($WinGetOutput | Select-Object -Skip 1)) {
+				if ($line -match '^(.*?) +([\w\d\.\+-_]+) +([\d\.\+-_]*?|Unknown) +([\d\.-]*|Unknown) +winget$') {
+					[PSCustomObject]@{
+						PackageId        = $Matches[2]
+						CurrentVersion   = $Matches[3]
+						AvailableVersion = $Matches[4]
 					}
 				}
-			)
+			}
+		)
+		$WinGetUpdates = $WinGetUpdates | Where-Object { $_.CurrentVersion -ne 'Unknown' } | Sort-Object PackageId
+		if ($WinGetUpdates) {
+			$WinGetUpdates | ConvertTo-Json | Out-File -FilePath $PathWinGet -Encoding utf8 -Force
+		}
+	}
+
+	# If Chocolatey is installed, list the available updates.
+	if ($Chocolatey) {
+		if (Test-Path $PathChoco -PathType Leaf) {
+			$Output = Get-Content $PathChoco | ConvertFrom-Json
 			if ($Output) {
 				Write-Host ('{0} Chocolatey package updates are available!' -f ($Output | Measure-Object).Count) -ForegroundColor Green
 				Write-Host ($Output | Format-Table | Out-String) -ForegroundColor Green
-			} else {
-				Write-Host 'Chocolatey packages are up to date!' -ForegroundColor Green
-			}
-		}
-
-		if (Test-Path "$env:TEMP\powershell-outdated.json" -ea 'SilentlyContinue') {
-			$Output = Get-Content "$env:TEMP\powershell-outdated.json" | ConvertFrom-Json
-			if ($Output) {
-				Write-Host ('{0} PowerShell module updates are available!' -f ($Output | Measure-Object).Count) -ForegroundColor Green
-				Write-Host ($Output | Format-Table | Out-String) -ForegroundColor Green
 			}
 		} else {
-			Write-Host 'PowerShell modules are up to date!' -ForegroundColor Green
+			Write-Host 'Chocolatey packages are up to date' -ForegroundColor Green
 		}
+	}
 
-		if ($WinGet -and (Test-Path "$env:TEMP\winget-outdated.txt" -ea 'SilentlyContinue')) {
-			$Detail = Get-Content "$env:TEMP\winget-outdated.txt"
-			$Output = @(
-				foreach ($line in ($Detail | Select-Object -Skip 1)) {
-					if ($line -match '^(.*?) +([\w\d\.\+-_]+) +([\d\.\+-_]*?|Unknown) +([\d\.-]*|Unknown) +winget$') {
-						[PSCustomObject]@{
-							PackageId        = $Matches[2]
-							CurrentVersion   = $Matches[3]
-							AvailableVersion = $Matches[4]
-						}
-					}
-				}
-			)
-			$Output = $Output | Where-Object { $_.CurrentVersion -ne 'Unknown' } | Sort-Object PackageId
+	# List the PS module available updates.
+	if (Test-Path $PathPS -PathType Leaf) {
+		$Output = Get-Content $PathPS | ConvertFrom-Json
+		if ($Output) {
+			Write-Host ('{0} PowerShell module updates are available!' -f ($Output | Measure-Object).Count) -ForegroundColor Green
+			Write-Host ($Output | Format-Table | Out-String) -ForegroundColor Green
+		}
+	} else {
+		Write-Host 'PowerShell modules are up to date' -ForegroundColor Green
+	}
+
+	# If Winget is installed, list the available updates.
+	if ($WinGet) {
+		if (Test-Path $PathWinGet -PathType Leaf) {
+			$Output = Get-Content $PathWinGet | ConvertFrom-Json
 			if ($Output) {
 				Write-Host ('{0} Winget package updates are available!' -f ($Output | Measure-Object).Count) -ForegroundColor Green
 				Write-Host ($Output | Format-Table | Out-String) -ForegroundColor Green
-			} else {
-				Write-Host 'Winget packages are up to date!' -ForegroundColor Green
 			}
+		} else {
+			Write-Host 'Winget packages are up to date' -ForegroundColor Green
 		}
 	}
 }
