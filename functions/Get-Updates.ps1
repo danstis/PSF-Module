@@ -43,7 +43,7 @@ function Get-Updates {
 		$ModuleUpdates = $Modules | ForEach-Object -Parallel {
 			$Module = $_
 			try {
-				$Available = Find-Module $Module.Name -Repository PSGallery
+				$Available = Find-Module $Module.Name -Repository PSGallery -ErrorAction 'Stop'
 				if ([version]($Available).Version -gt [version]$_.Version) {
 					[PSCustomObject]@{
 						Module           = $Module.Name
