@@ -38,20 +38,40 @@ function Get-Updates {
 			$_.Name -notlike 'AzureRM.*' -and `
 			$_.Name -notlike 'Microsoft.Graph.*' `
 	} | Group-Object Name | Select-Object Name, @{n = 'Version'; e = { $_.Group[0].Version } }
-	$ModuleUpdates = foreach ($Module in $Modules) {
-		try {
-			$Available = Find-Module $Module.Name
-			if ([version]($Available).Version -gt [version]$Module.Version) {
-				[PSCustomObject]@{
-					Module           = $Module.Name
-					CurrentVersion   = $Module.Version.ToString()
-					AvailableVersion = $Available.Version
+	# If running PS 7 or later, run the checks in parallel.
+	if ($PSVersionTable.PSVersion.Major -ge 7) {
+		$ModuleUpdates = $Modules | ForEach-Object -Parallel {
+			$Module = $_
+			try {
+				$Available = Find-Module $Module.Name -Repository PSGallery
+				if ([version]($Available).Version -gt [version]$_.Version) {
+					[PSCustomObject]@{
+						Module           = $Module.Name
+						CurrentVersion   = $Module.Version.ToString()
+						AvailableVersion = $Available.Version
+					}
 				}
+			} catch {
+				Write-Warning ('Failed to find details for module "{0}": {1}' -f $Module.Name, $_.Exception.Message)
 			}
-		} catch {
-			Write-Warning ('Failed to find details for module "{0}": {1}' -f $Module.Name, $_.Exception.Message)
+		} -ThrottleLimit 8
+	} else {
+		$ModuleUpdates = foreach ($Module in $Modules) {
+			try {
+				$Available = Find-Module $Module.Name -Repository PSGallery
+				if ([version]($Available).Version -gt [version]$Module.Version) {
+					[PSCustomObject]@{
+						Module           = $Module.Name
+						CurrentVersion   = $Module.Version.ToString()
+						AvailableVersion = $Available.Version
+					}
+				}
+			} catch {
+				Write-Warning ('Failed to find details for module "{0}": {1}' -f $Module.Name, $_.Exception.Message)
+			}
 		}
 	}
+
 	if ($ModuleUpdates) {
 		$ModuleUpdates | ConvertTo-Json | Out-File -FilePath $PathPS -Encoding utf8 -Force
 	}
