@@ -90,7 +90,7 @@ function Get-Updates {
 		$WinGetOutput = & winget upgrade
 		$WinGetUpdates = @(
 			foreach ($line in ($WinGetOutput | Select-Object -Skip 1)) {
-				if ($line -match '^(.*?) +([\w\d\.\+-_]+) +([\d\.\+-_]*?|Unknown) +([\d\.-]*|Unknown) +winget$') {
+				if ($line -match '^(.*?) +([\w\d\.\+-_]+) +(?:< |)([\d\.\+-_]*?|Unknown) +([\d\.-]*|Unknown) +winget$') {
 					[PSCustomObject]@{
 						PackageId        = $Matches[2]
 						CurrentVersion   = $Matches[3]
