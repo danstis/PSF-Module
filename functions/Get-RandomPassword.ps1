@@ -76,7 +76,7 @@ Function Get-RandomPassword {
 
 	# Randomise the characters in the Password array and join them as a single line. Output the line to screen and copy to clipboard.
 	$Output = ($Password | Sort-Object { Get-Random }) -Join ''
-	$Output | Clip
+	$Output | Set-Clipboard
 	Return $Output
 }
 
