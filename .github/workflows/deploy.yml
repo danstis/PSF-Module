@@ -57,6 +57,12 @@ jobs:
         run: |
           Update-ModuleManifest -Path .\PSF.psd1 -ModuleVersion ${{ steps.gitversion.outputs.MajorMinorPatch }}
 
+      - name: Update copyright year
+        shell: pwsh
+        run: |
+          $year = (Get-Date).Year
+          (Get-Content .\PSF.psd1) -replace "(?<=Copyright\s*=\s*'\(c\) )\d{4}", $year | Set-Content .\PSF.psd1
+
       - name: Copy files to staging directory
         shell: pwsh
         run: |
