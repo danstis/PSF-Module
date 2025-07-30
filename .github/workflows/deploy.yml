@@ -27,7 +27,7 @@ jobs:
 
   deploy:
     name: Tag and Deploy
-    runs-on: windows-2019
+    runs-on: windows-latest
     needs: [test]
     if: contains(github.ref, 'master')
     steps:
