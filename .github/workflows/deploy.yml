@@ -39,7 +39,7 @@ jobs:
       - name: Install GitVersion
         uses: gittools/actions/gitversion/setup@v4.0.1
         with:
-          versionSpec: "5.5.x"
+          versionSpec: "6.x"
 
       - name: Version with GitVersion # https://github.com/marketplace/actions/use-actions
         id: gitversion

@@ -1,12 +1,17 @@
 {
-	"cSpell.words": [
-		"abcdefghijklmnopqrstuvwxy",
-		"chinacloudapi",
-		"gpip",
-		"ipify",
-		"ULNS",
-		"Wifi",
-		"Winget",
-		"WLAN"
-	]
+  "cSpell.words": [
+    "abcdefghijklmnopqrstuvwxy",
+    "chinacloudapi",
+    "gpip",
+    "ipify",
+    "ULNS",
+    "Wifi",
+    "Winget",
+    "WLAN"
+  ],
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "text": "Use conventional commit message format."
+    }
+  ]
 }
