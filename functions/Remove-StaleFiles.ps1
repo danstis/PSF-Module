@@ -51,7 +51,7 @@ function Remove-StaleFiles {
 	$StartTime = Get-Date
 
 	# Set up logging - use appropriate temp directory for the platform.
-	$TempDir = if ($env:TEMP) { $env:TEMP } elseif ($env:TMPDIR) { $env:TMPDIR } else { '/tmp' }
+	$TempDir = [System.IO.Path]::GetTempPath()
 	$LogDir = Join-Path $TempDir 'PSF-Module/Logs'
 	$LogName = 'RemoveStaleFiles'
 	$DateSuffix = Get-Date -Format 'yyyy-MM-dd'
