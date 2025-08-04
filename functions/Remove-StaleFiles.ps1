@@ -64,7 +64,7 @@ function Remove-StaleFiles {
 		)
 
 		if (-not (Test-Path $LogDir)) {
-			New-Item -Path $LogDir -ItemType Directory -Force | Out-Null
+			$null = New-Item -Path $LogDir -ItemType Directory -Force
 		}
 
 		$Timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
