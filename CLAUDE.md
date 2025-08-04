@@ -22,7 +22,7 @@ PSF-Module is a PowerShell utility module published to the PowerShell Gallery. I
 
 ### Critical Files Synchronization
 
-The module requires three files to stay synchronized when adding/modifying functions:
+The module requires three files to stay synchronised when adding/modifying functions:
 
 1. **`functions/FunctionName.ps1`** - Function implementation
 2. **`PSF.psm1`** - Must dot-source the function: `. $PSScriptRoot\functions\FunctionName.ps1`
