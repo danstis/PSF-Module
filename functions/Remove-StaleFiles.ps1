@@ -134,7 +134,7 @@ function Remove-StaleFiles {
 
 	$ItemsToRemove = @()
 
-	# Process files first
+	# Process files first.
 	$StaleFiles = $AllItems | Where-Object {
 		-not $_.PSIsContainer -and
 		$_.LastWriteTime -lt $CutoffDate -and
