@@ -6,7 +6,7 @@ Describe 'Remove-StaleFiles' {
 
 	BeforeAll {
 		$TestPath = Join-Path $TestDrive 'StaleFilesTest'
-		$null = New-Item -Path $TestPath -ItemType Directory -Force
+		New-Item -Path $TestPath -ItemType Directory -Force | Out-Null
 	}
 
 	BeforeEach {
@@ -24,8 +24,8 @@ Describe 'Remove-StaleFiles' {
 		'old log' | Out-File -FilePath $OldLogFile
 		'new log' | Out-File -FilePath $NewLogFile
 
-		$null = New-Item -Path $OldDir -ItemType Directory
-		$null = New-Item -Path $NewDir -ItemType Directory
+		New-Item -Path $OldDir -ItemType Directory | Out-Null
+		New-Item -Path $NewDir -ItemType Directory | Out-Null
 
 		$OldDate = (Get-Date).AddDays(-15)
 		$NewDate = (Get-Date).AddDays(-1)
@@ -71,7 +71,7 @@ Describe 'Remove-StaleFiles' {
 
 		It 'Should handle empty directories' {
 			$EmptyOldDir = Join-Path $TestPath 'EmptyOldDir'
-			$null = New-Item -Path $EmptyOldDir -ItemType Directory
+			New-Item -Path $EmptyOldDir -ItemType Directory | Out-Null
 			(Get-Item $EmptyOldDir).LastWriteTime = (Get-Date).AddDays(-15)
 
 			Remove-StaleFiles -Path $TestPath -Age 10 -Force
@@ -146,17 +146,17 @@ Describe 'Remove-StaleFiles' {
 		BeforeAll {
 			# Create a mock system directory for safe testing
 			$MockSystemPath = Join-Path $TestDrive 'MockSystemPath'
-			$null = New-Item -Path $MockSystemPath -ItemType Directory -Force
-
+			New-Item -Path $MockSystemPath -ItemType Directory -Force | Out-Null
+			
 			# Extract Test-SystemPath function for direct testing
-			$FunctionContent = Get-Content ('{0}\..\functions\Remove-StaleFiles.ps1' -f $PSScriptRoot) -Raw
-
+			$FunctionContent = Get-Content $PSScriptRoot\..\functions\Remove-StaleFiles.ps1 -Raw
+			
 			# Create Test-SystemPath function in current scope for testing
 			$TestSystemPathStart = $FunctionContent.IndexOf('function Test-SystemPath {')
 			$BraceCount = 0
 			$InFunction = $false
 			$FunctionEnd = -1
-
+			
 			for ($i = $TestSystemPathStart; $i -lt $FunctionContent.Length; $i++) {
 				$char = $FunctionContent[$i]
 				if ($char -eq '{') {
@@ -171,7 +171,7 @@ Describe 'Remove-StaleFiles' {
 					}
 				}
 			}
-
+			
 			if ($FunctionEnd -gt 0) {
 				$TestSystemPathFunction = $FunctionContent.Substring($TestSystemPathStart, $FunctionEnd - $TestSystemPathStart + 1)
 				Invoke-Expression $TestSystemPathFunction
@@ -179,19 +179,15 @@ Describe 'Remove-StaleFiles' {
 		}
 
 		It 'Should prevent execution on system paths without AllowSystemPaths' {
-			# Mock the function to always return true (simulate system path detection)
-			InModuleScope PSF {
-				Mock Test-SystemPath { return $true }
-			}
+			# Test with a mock path that simulates system directory detection
+			Mock Test-SystemPath { return $true }
 			
 			{ Remove-StaleFiles -Path $MockSystemPath -Age 10 -ErrorAction Stop } | Should -Throw -ExpectedMessage '*system directory*'
 		}
 
 		It 'Should allow execution with AllowSystemPaths parameter' {
-			# Mock the function to always return true (simulate system path detection)
-			InModuleScope PSF {
-				Mock Test-SystemPath { return $true }
-			}
+			# Test with a mock path that simulates system directory detection
+			Mock Test-SystemPath { return $true }
 			
 			{ Remove-StaleFiles -Path $MockSystemPath -Age 10 -AllowSystemPaths -WhatIf } | Should -Not -Throw
 		}
@@ -205,14 +201,14 @@ Describe 'Remove-StaleFiles' {
 	Context 'Test-SystemPath Function Unit Tests' {
 		BeforeAll {
 			# Extract Test-SystemPath function for direct testing
-			$FunctionContent = Get-Content ('{0}\..\functions\Remove-StaleFiles.ps1' -f $PSScriptRoot) -Raw
-
+			$FunctionContent = Get-Content $PSScriptRoot\..\functions\Remove-StaleFiles.ps1 -Raw
+			
 			# Create Test-SystemPath function in current scope for testing
 			$TestSystemPathStart = $FunctionContent.IndexOf('function Test-SystemPath {')
 			$BraceCount = 0
 			$InFunction = $false
 			$FunctionEnd = -1
-
+			
 			for ($i = $TestSystemPathStart; $i -lt $FunctionContent.Length; $i++) {
 				$char = $FunctionContent[$i]
 				if ($char -eq '{') {
@@ -227,7 +223,7 @@ Describe 'Remove-StaleFiles' {
 					}
 				}
 			}
-
+			
 			if ($FunctionEnd -gt 0) {
 				$TestSystemPathFunction = $FunctionContent.Substring($TestSystemPathStart, $FunctionEnd - $TestSystemPathStart + 1)
 				Invoke-Expression $TestSystemPathFunction
@@ -238,7 +234,7 @@ Describe 'Remove-StaleFiles' {
 			if ($IsWindows -or $env:OS -eq 'Windows_NT') {
 				# Test drive roots
 				Test-SystemPath -TestPath 'C:\' | Should -Be $true
-
+				
 				# Test system directories using environment variables (if they exist)
 				if ($env:SystemRoot) {
 					Test-SystemPath -TestPath $env:SystemRoot | Should -Be $true
@@ -262,7 +258,7 @@ Describe 'Remove-StaleFiles' {
 			# Test with temp directory (always safe)
 			$TempPath = [System.IO.Path]::GetTempPath()
 			Test-SystemPath -TestPath $TempPath | Should -Be $false
-
+			
 			# Test with typical user paths
 			if ($IsWindows -or $env:OS -eq 'Windows_NT') {
 				Test-SystemPath -TestPath 'C:\Users\TestUser\Documents' | Should -Be $false
@@ -295,9 +291,7 @@ Describe 'Remove-StaleFiles' {
 		It 'Should return false for non-existent but safe path patterns' {
 			# These paths don't exist but follow safe patterns
 			Test-SystemPath -TestPath '/home/nonexistent/folder' | Should -Be $false
-			if ($IsWindows -or $env:OS -eq 'Windows_NT') {
-				Test-SystemPath -TestPath 'C:\Users\NonExistent\Folder' | Should -Be $false
-			}
+			Test-SystemPath -TestPath 'C:\Users\NonExistent\Folder' | Should -Be $false
 		}
 	}
 
@@ -311,18 +305,18 @@ Describe 'Remove-StaleFiles' {
 			$FilesBefore = Get-ChildItem -Path $TestPath -Recurse | Measure-Object | Select-Object -ExpandProperty Count
 			Remove-StaleFiles -Path $TestPath -Age 1 -WhatIf
 			$FilesAfter = Get-ChildItem -Path $TestPath -Recurse | Measure-Object | Select-Object -ExpandProperty Count
-
+			
 			$FilesAfter | Should -Be $FilesBefore
 		}
 
 		It 'Should work with WhatIf and AllowSystemPaths on safe test directory' {
 			# Create a directory that simulates system path behavior but is safe
 			$SafeTestDir = Join-Path $TestDrive 'SafeSystemLikeDir'
-			$null = New-Item -Path $SafeTestDir -ItemType Directory -Force
-
+			New-Item -Path $SafeTestDir -ItemType Directory -Force | Out-Null
+			
 			'test content' | Out-File -FilePath (Join-Path $SafeTestDir 'test.txt')
 			(Get-Item (Join-Path $SafeTestDir 'test.txt')).LastWriteTime = (Get-Date).AddDays(-15)
-
+			
 			{ Remove-StaleFiles -Path $SafeTestDir -Age 10 -AllowSystemPaths -WhatIf } | Should -Not -Throw
 		}
 	}

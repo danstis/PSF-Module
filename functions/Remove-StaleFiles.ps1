@@ -1,91 +1,3 @@
-function Test-SystemPath {
-	<#
-	.SYNOPSIS
-		Tests if a given path is a system directory that should be protected from bulk deletion.
-	.DESCRIPTION
-		This function checks if the specified path matches known system directories that should not be processed
-		by Remove-StaleFiles for safety reasons. It checks against Windows system paths (drive roots, Program Files,
-		Windows directory) and Unix/Linux system paths (/, /etc, /bin, etc.).
-	.PARAMETER TestPath
-		The path to test for system directory status.
-	.OUTPUTS
-		[bool] Returns $true if the path is a system directory, $false otherwise.
-	#>
-	param(
-		[string] $TestPath
-	)
-
-	# Resolve to absolute path.
-	$FullPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($TestPath)
-
-	# Get blocked paths using system variables where available.
-	$BlockedPaths = @()
-
-	# Windows system paths
-	if ($IsWindows -or $env:OS -eq 'Windows_NT') {
-		# Drive roots (C:\, D:\, etc.).
-		$BlockedPaths += Get-PSDrive -PSProvider FileSystem | ForEach-Object { $_.Root }
-
-		# System directories using environment variables.
-		if ($env:SystemRoot) { $BlockedPaths += $env:SystemRoot }
-		if ($env:ProgramFiles) { $BlockedPaths += $env:ProgramFiles }
-		if ($env:ProgramData) { $BlockedPaths += $env:ProgramData }
-		if ($env:ProgramW6432) { $BlockedPaths += $env:ProgramW6432 }
-		if (${env:ProgramFiles(x86)}) { $BlockedPaths += ${env:ProgramFiles(x86)} }
-
-		# .NET system directory.
-		try {
-			$BlockedPaths += [Environment]::SystemDirectory
-		} catch { }
-	}
-
-	# Unix/Linux system paths.
-	if ($IsLinux -or $IsMacOS -or (!$IsWindows -and $env:OS -ne 'Windows_NT')) {
-		$BlockedPaths += @(
-			'/',
-			'/etc',
-			'/bin',
-			'/sbin',
-			'/usr',
-			'/boot',
-			'/sys',
-			'/proc'
-		)
-	}
-
-	# macOS additional paths.
-	if ($IsMacOS) {
-		$BlockedPaths += @(
-			'/System',
-			'/Applications'
-		)
-	}
-
-	# Check if the test path matches or is a parent of any blocked path.
-	foreach ($BlockedPath in $BlockedPaths) {
-		if (-not $BlockedPath) { continue }
-
-		try {
-			$ResolvedBlockedPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($BlockedPath)
-
-			# Normalise paths for comparison (handle trailing separators).
-			$NormalisedTestPath = $FullPath.TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
-			$NormalisedBlockedPath = $ResolvedBlockedPath.TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
-
-			# Check for exact match.
-			if ($NormalisedTestPath -eq $NormalisedBlockedPath) {
-				return $true
-			}
-		}
-		catch {
-			# If path resolution fails, skip this check.
-			continue
-		}
-	}
-
-	return $false
-}
-
 function Remove-StaleFiles {
 	<#
 	.SYNOPSIS
@@ -146,11 +58,11 @@ function Remove-StaleFiles {
 	$StartTime = Get-Date
 
 	# Set up logging - use appropriate temp directory for the platform.
-	$TempDirectory = [System.IO.Path]::GetTempPath()
-	$LogDirectory = Join-Path $TempDirectory 'PSF-Module/Logs'
-	$LogFileName = 'RemoveStaleFiles'
+	$TempDir = [System.IO.Path]::GetTempPath()
+	$LogDir = Join-Path $TempDir 'PSF-Module/Logs'
+	$LogName = 'RemoveStaleFiles'
 	$DateSuffix = Get-Date -Format 'yyyy-MM-dd'
-	$LogPath = Join-Path $LogDirectory ('{0}-{1}.log' -f $LogFileName, $DateSuffix)
+	$LogPath = Join-Path $LogDir ('{0}-{1}.log' -f $LogName, $DateSuffix)
 
 	function Write-StaleFileLog {
 		param(
@@ -158,15 +70,90 @@ function Remove-StaleFiles {
 			[string] $Level = 'INFO'
 		)
 
-		if (-not (Test-Path $LogDirectory)) {
-			$null = New-Item -Path $LogDirectory -ItemType Directory -Force
+		if (-not (Test-Path $LogDir)) {
+			$null = New-Item -Path $LogDir -ItemType Directory -Force
 		}
 
-		$TimeStamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
-		$LogEntry = '{0} [{1}] {2}' -f $TimeStamp, $Level, $Message
-		$null = $LogEntry | Out-File -FilePath $LogPath -Append -Encoding UTF8
+		$Timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+		$LogEntry = '{0} [{1}] {2}' -f $Timestamp, $Level, $Message
+		$LogEntry | Out-File -FilePath $LogPath -Append -Encoding UTF8
 	}
 
+	function Test-SystemPath {
+		param(
+			[string] $TestPath
+		)
+
+		# Resolve to absolute path.
+		$FullPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($TestPath)
+
+		# Get blocked paths using system variables where available.
+		$BlockedPaths = @()
+
+		# Windows system paths
+		if ($IsWindows -or $env:OS -eq 'Windows_NT') {
+			# Drive roots (C:\, D:\, etc.).
+			$BlockedPaths += Get-PSDrive -PSProvider FileSystem | ForEach-Object { $_.Root }
+
+			# System directories using environment variables.
+			if ($env:SystemRoot) { $BlockedPaths += $env:SystemRoot }
+			if ($env:ProgramFiles) { $BlockedPaths += $env:ProgramFiles }
+			if ($env:ProgramData) { $BlockedPaths += $env:ProgramData }
+			if ($env:ProgramW6432) { $BlockedPaths += $env:ProgramW6432 }
+			if (${env:ProgramFiles(x86)}) { $BlockedPaths += ${env:ProgramFiles(x86)} }
+
+			# .NET system directory.
+			try {
+				$BlockedPaths += [Environment]::SystemDirectory
+			} catch { }
+		}
+
+		# Unix/Linux system paths.
+		if ($IsLinux -or $IsMacOS -or (!$IsWindows -and $env:OS -ne 'Windows_NT')) {
+			$BlockedPaths += @(
+				'/',
+				'/etc',
+				'/bin',
+				'/sbin',
+				'/usr',
+				'/boot',
+				'/sys',
+				'/proc'
+			)
+		}
+
+		# macOS additional paths.
+		if ($IsMacOS) {
+			$BlockedPaths += @(
+				'/System',
+				'/Applications'
+			)
+		}
+
+		# Check if the test path matches or is a parent of any blocked path.
+		foreach ($BlockedPath in $BlockedPaths) {
+			if (-not $BlockedPath) { continue }
+
+			try {
+				$ResolvedBlockedPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($BlockedPath)
+
+				# Normalize paths for comparison (handle trailing separators).
+				$NormalizedTestPath = $FullPath.TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+				$NormalizedBlockedPath = $ResolvedBlockedPath.TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
+
+				# Check for exact match.
+				if ($NormalizedTestPath -eq $NormalizedBlockedPath) {
+					return $true
+				}
+			}
+			catch {
+				# If path resolution fails, skip this check.
+				continue
+			}
+		}
+
+		return $false
+	}
 
 	function Clear-OldLogs {
 		param(
@@ -177,7 +164,7 @@ function Remove-StaleFiles {
 
 		if (Test-Path $LogDirectory) {
 			$CutoffDate = (Get-Date).AddDays(-$RetentionDays)
-			$null = Get-ChildItem -Path $LogDirectory -Filter ('{0}-*.log' -f $LogPrefix) |
+			Get-ChildItem -Path $LogDirectory -Filter ('{0}-*.log' -f $LogPrefix) |
 				Where-Object { $_.LastWriteTime -lt $CutoffDate } |
 				ForEach-Object {
 					try {
@@ -192,7 +179,7 @@ function Remove-StaleFiles {
 	}
 
 	# Clean up old logs.
-	Clear-OldLogs -LogDirectory $LogDirectory -LogPrefix $LogFileName -RetentionDays $LogRetentionDays
+	Clear-OldLogs -LogDirectory $LogDir -LogPrefix $LogName -RetentionDays $LogRetentionDays
 
 	# Log function start.
 	$LogParams = @(
@@ -277,14 +264,14 @@ function Remove-StaleFiles {
 	if ($Files.Count -gt 0) {
 		Write-Information ('  Files: {0}' -f $Files.Count)
 		if ($VerbosePreference -eq 'Continue') {
-			$null = $Files | ForEach-Object { Write-Verbose ('    {0} ({1})' -f $_.FullName, (Get-Date $_.LastWriteTime -Format 'yyyy-MM-dd HH:mm:ss')) }
+			$Files | ForEach-Object { Write-Verbose ('    {0} ({1})' -f $_.FullName, (Get-Date $_.LastWriteTime -Format 'yyyy-MM-dd HH:mm:ss')) }
 		}
 	}
 
 	if ($Directories.Count -gt 0) {
 		Write-Information ('  Directories: {0}' -f $Directories.Count)
 		if ($VerbosePreference -eq 'Continue') {
-			$null = $Directories | ForEach-Object { Write-Verbose ('    {0} ({1})' -f $_.FullName, (Get-Date $_.LastWriteTime -Format 'yyyy-MM-dd HH:mm:ss')) }
+			$Directories | ForEach-Object { Write-Verbose ('    {0} ({1})' -f $_.FullName, (Get-Date $_.LastWriteTime -Format 'yyyy-MM-dd HH:mm:ss')) }
 		}
 	}
 
