@@ -6,9 +6,6 @@ function Remove-StaleFiles {
 		Remove-StaleFiles recursively removes files and directories that have not been modified within a specified number of days.
 		Files and directories older than the specified age are considered "stale" and will be removed.
 		Logs are written to daily files in the user's temp directory with automatic cleanup.
-
-		Safety checks prevent execution on system directories (Windows: drive roots, Program Files, Windows directory; Unix/Linux: /, /etc, /bin, etc.).
-		Use -AllowSystemPaths to bypass these protections with extreme caution.
 	.PARAMETER Path
 		The directory path to process. Defaults to the current user's temporary directory.
 	.PARAMETER Age
@@ -19,8 +16,6 @@ function Remove-StaleFiles {
 		Skip confirmation prompts and remove files without asking.
 	.PARAMETER LogRetentionDays
 		Number of days to keep daily log files. Defaults to 7 days.
-	.PARAMETER AllowSystemPaths
-		Allow processing of system directories. Use with extreme caution as this can damage your system.
 	.EXAMPLE
 		C:\PS> Remove-StaleFiles -Age 30 -Path "C:\Temp"
 		Removes all files and directories in C:\Temp that haven't been modified in 30 days.
@@ -49,9 +44,7 @@ function Remove-StaleFiles {
 		[Parameter(Mandatory = $false)]
 		[switch] $Force,
 		[Parameter(Mandatory = $false, HelpMessage = 'Number of days to keep log files')]
-		[int] $LogRetentionDays = 7,
-		[Parameter(Mandatory = $false, HelpMessage = 'Allow processing of system directories (use with extreme caution)')]
-		[switch] $AllowSystemPaths
+		[int] $LogRetentionDays = 7
 	)
 	$ErrorActionPreference = 'Stop'
 	$InformationPreference = 'Continue'
@@ -77,82 +70,6 @@ function Remove-StaleFiles {
 		$Timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
 		$LogEntry = '{0} [{1}] {2}' -f $Timestamp, $Level, $Message
 		$LogEntry | Out-File -FilePath $LogPath -Append -Encoding UTF8
-	}
-
-	function Test-SystemPath {
-		param(
-			[string] $TestPath
-		)
-
-		# Resolve to absolute path.
-		$FullPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($TestPath)
-
-		# Get blocked paths using system variables where available.
-		$BlockedPaths = @()
-
-		# Windows system paths
-		if ($IsWindows -or $env:OS -eq 'Windows_NT') {
-			# Drive roots (C:\, D:\, etc.).
-			$BlockedPaths += Get-PSDrive -PSProvider FileSystem | ForEach-Object { $_.Root }
-
-			# System directories using environment variables.
-			if ($env:SystemRoot) { $BlockedPaths += $env:SystemRoot }
-			if ($env:ProgramFiles) { $BlockedPaths += $env:ProgramFiles }
-			if ($env:ProgramData) { $BlockedPaths += $env:ProgramData }
-			if ($env:ProgramW6432) { $BlockedPaths += $env:ProgramW6432 }
-			if (${env:ProgramFiles(x86)}) { $BlockedPaths += ${env:ProgramFiles(x86)} }
-
-			# .NET system directory.
-			try {
-				$BlockedPaths += [Environment]::SystemDirectory
-			} catch { }
-		}
-
-		# Unix/Linux system paths.
-		if ($IsLinux -or $IsMacOS -or (!$IsWindows -and $env:OS -ne 'Windows_NT')) {
-			$BlockedPaths += @(
-				'/',
-				'/etc',
-				'/bin',
-				'/sbin',
-				'/usr',
-				'/boot',
-				'/sys',
-				'/proc'
-			)
-		}
-
-		# macOS additional paths.
-		if ($IsMacOS) {
-			$BlockedPaths += @(
-				'/System',
-				'/Applications'
-			)
-		}
-
-		# Check if the test path matches or is a parent of any blocked path.
-		foreach ($BlockedPath in $BlockedPaths) {
-			if (-not $BlockedPath) { continue }
-
-			try {
-				$ResolvedBlockedPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($BlockedPath)
-
-				# Normalize paths for comparison (handle trailing separators).
-				$NormalizedTestPath = $FullPath.TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
-				$NormalizedBlockedPath = $ResolvedBlockedPath.TrimEnd([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
-
-				# Check for exact match.
-				if ($NormalizedTestPath -eq $NormalizedBlockedPath) {
-					return $true
-				}
-			}
-			catch {
-				# If path resolution fails, skip this check.
-				continue
-			}
-		}
-
-		return $false
 	}
 
 	function Clear-OldLogs {
@@ -194,14 +111,6 @@ function Remove-StaleFiles {
 
 	if (-not (Test-Path -Path $Path)) {
 		$ErrorMsg = ('Path ''{0}'' does not exist.' -f $Path)
-		Write-StaleFileLog $ErrorMsg 'ERROR'
-		Write-Error $ErrorMsg
-		return
-	}
-
-	# Safety check: prevent running on system directories unless explicitly allowed
-	if (-not $AllowSystemPaths -and (Test-SystemPath -TestPath $Path)) {
-		$ErrorMsg = ('Path ''{0}'' is a system directory. Use -AllowSystemPaths to override this safety check.' -f $Path)
 		Write-StaleFileLog $ErrorMsg 'ERROR'
 		Write-Error $ErrorMsg
 		return

@@ -67,28 +67,6 @@ When adding a new function, you must update all three locations:
 3. Add `'New-FunctionName'` to `FunctionsToExport` array in `PSF.psd1`
 4. Create `tests/New-FunctionName.Tests.ps1` with Pester tests
 
-## PowerShell Coding Standards
-
-When writing PowerShell code in this module, follow these standards:
-
-### Variable and Naming Conventions
-- **Always use PascalCase for variables:** `$MyVariable`, `$UserName`, not `$myVariable` or `$username`
-- **Use descriptive variable names:** `$ComputerName` instead of `$cn`, `$FilePath` instead of `$fp`
-- **Expand all aliases:** Use `Get-ChildItem` instead of `gci`, `Where-Object` instead of `where`
-- **Use correct cmdlet casing:** `Get-Content`, `Set-Location`, `Write-Output`
-
-### String and Formatting
-- **Use single quotes for strings:** `'Hello World'` instead of `"Hello World"` (unless variable expansion needed)
-- **Use -f formatting over automatic interpolation:** `'Hello {0}' -f $Name` instead of `"Hello $Name"`
-
-### Operators and Syntax
-- **Prefer `-not` over `!`:** `if (-not $Variable)` instead of `if (!$Variable)`
-- **Use `$null = ...` instead of `... | Out-Null`:** `$null = Remove-Item $Path` instead of `Remove-Item $Path | Out-Null`
-
-### Documentation and Comments
-- **Ensure correct spelling and grammar in comments**
-- **Use en-GB spelling:** "colour" not "color", "realise" not "realize", "centre" not "center"
-
 ## Key Constraints
 
 - No external dependencies beyond standard PowerShell modules
