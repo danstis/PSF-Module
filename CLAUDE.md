@@ -89,6 +89,37 @@ When writing PowerShell code in this module, follow these standards:
 - **Ensure correct spelling and grammar in comments**
 - **Use en-GB spelling:** "colour" not "color", "realise" not "realize", "centre" not "center"
 
+## Testing Standards
+
+### Safe System Path Testing
+When writing tests for functions that interact with system paths (like Remove-StaleFiles):
+
+- **NEVER use real system paths in tests:** Avoid testing with actual system directories like `'C:\'`, `'/'`, `'/etc'`, `'C:\Windows'`, etc.
+- **Always use mocks for system path detection:** Use `InModuleScope` with `Mock` to simulate system path behaviour safely
+- **Use TestDrive for file operations:** Create test files and directories within Pester's `$TestDrive` for safe, isolated testing
+- **Mock internal functions when needed:** For functions like `Test-SystemPath`, extract them as standalone functions if they need to be mocked
+
+#### Example Safe System Path Testing Pattern:
+```powershell
+It 'Should prevent execution on system paths' {
+    # Mock the system path detection function
+    InModuleScope PSF {
+        Mock Test-SystemPath { return $true }
+    }
+    
+    # Test with safe mock directory - the mock ensures any path is treated as a system path
+    { Remove-StaleFiles -Path $MockSystemPath -Age 10 -ErrorAction Stop } | 
+        Should -Throw -ExpectedMessage '*system directory*'
+}
+```
+
+#### Never Do This:
+```powershell
+# DANGEROUS - Never test with real system paths
+{ Remove-StaleFiles -Path 'C:\' -Age 10 } | Should -Throw
+{ Remove-StaleFiles -Path '/' -Age 10 } | Should -Throw
+```
+
 ## Key Constraints
 
 - No external dependencies beyond standard PowerShell modules
