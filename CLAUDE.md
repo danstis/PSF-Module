@@ -20,7 +20,7 @@ PSF-Module is a PowerShell utility module published to the PowerShell Gallery. I
 
 ## Architecture & Module Structure
 
-### Critical Files Synchronization
+### Critical Files Synchronisation
 
 The module requires three files to stay synchronised when adding/modifying functions:
 
