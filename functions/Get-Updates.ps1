@@ -48,7 +48,7 @@ function Get-Updates {
 					[PSCustomObject]@{
 						Module           = $Module.Name
 						CurrentVersion   = $Module.Version.ToString()
-						AvailableVersion = $Available.Version
+						AvailableVersion = $Available.Version.ToString()
 					}
 				}
 			} catch {
@@ -63,7 +63,7 @@ function Get-Updates {
 					[PSCustomObject]@{
 						Module           = $Module.Name
 						CurrentVersion   = $Module.Version.ToString()
-						AvailableVersion = $Available.Version
+						AvailableVersion = $Available.Version.ToString()
 					}
 				}
 			} catch {
